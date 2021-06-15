@@ -112,7 +112,7 @@ def write_subs_to_file(subs, output_file):
         f.write(data)
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     print(args)
     time_initial = datetime.strptime("00:00:00", "%H:%M:%S")
@@ -131,3 +131,6 @@ if __name__ == '__main__':
     subs = convert_subtitles(sub_data)
     write_subs_to_file(subs, args.output)
     
+
+if __name__ == '__main__':
+    main()

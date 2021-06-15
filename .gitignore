@@ -1,0 +1,5 @@
+/.env/
+/build/
+/dist/
+*~
+/stream_archive_subtitle.egg-info/
