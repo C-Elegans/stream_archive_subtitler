@@ -10,5 +10,5 @@ setup(name='stream_archive_subtitle',
           'console_scripts': [
               'stream_archive_subtitle = stream_archive_subtitle.stream_archive_subtitle:main'
           ]
-      }
+      },
       )
