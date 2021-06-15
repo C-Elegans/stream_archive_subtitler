@@ -11,8 +11,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Create a subtitle .srt file from korotagger or chat_downloader output')
     parser.add_argument('files', nargs='+', help='The korotagger or chat_downloader files to parse')
     parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
-    parser.add_argument('-t', '--translator-filter', nargs=1, help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
-    parser.add_argument('-s', '--start', nargs=1, default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
+    parser.add_argument('-t', '--translator-filter', help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
+    parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
     return parser.parse_args()
 
 
@@ -114,7 +114,7 @@ def write_subs_to_file(subs, output_file):
 
 if __name__ == '__main__':
     args = parse_args()
-    #print(args)
+    print(args)
     time_initial = datetime.strptime("00:00:00", "%H:%M:%S")
     video_offset_time=datetime.strptime(args.start, "%H:%M:%S")
     video_offset_time-=time_initial # convert to time delta
