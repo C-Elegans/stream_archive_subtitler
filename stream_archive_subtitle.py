@@ -3,16 +3,22 @@ import time
 from datetime import datetime, timedelta
 import re
 import json
+import argparse
+import os
 
-txt_file='minecraft_stream.txt'
-time_initial = datetime.strptime("00:00:00", "%H:%M:%S")
-video_offset='0:0:0'
-video_offset_time=datetime.strptime(video_offset, "%H:%M:%S")
-video_offset_time-=time_initial # convert to time delta
 
-translator_filter = re.compile(r'\[[eE][nN]\]')
+def parse_args():
+    parser = argparse.ArgumentParser(description='Create a subtitle .srt file from korotagger or chat_downloader output')
+    parser.add_argument('files', nargs='+', help='The korotagger or chat_downloader files to parse')
+    parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
+    parser.add_argument('-t', '--translator-filter', nargs=1, help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
+    parser.add_argument('-s', '--start', nargs=1, default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
+    return parser.parse_args()
 
-def parse_korotagger_txt(input_file):
+
+
+
+def parse_korotagger_txt(input_file, video_offset_time):
     # Read in all of the lines from the text file
     with open(input_file, 'r') as f:
         lines = f.readlines()
@@ -54,7 +60,7 @@ def parse_korotagger_txt(input_file):
         subtitle_lines.append((time_delta, text))
     return subtitle_lines
 
-def parse_json(json_file):
+def parse_json(json_file, video_offset_time, translator_filter):
     with open(json_file, 'r') as f:
         json_data = json.load(f)
 
@@ -80,7 +86,7 @@ def parse_json(json_file):
         # If the message came before the video offset, discard it
         if time_delta.total_seconds() < 0:
             continue
-        print(message, time_delta)
+        # print(message, time_delta)
         # Append it to the array
         subtitle_lines.append((time_delta, message))
     return subtitle_lines
@@ -107,10 +113,21 @@ def write_subs_to_file(subs, output_file):
 
 
 if __name__ == '__main__':
-    # sub_data = parse_korotagger_txt('minecraft_stream.txt')
-    # subs = convert_subtitles(sub_data)
-    # write_subs_to_file(subs, 'subtitles.srt')
-    sub_data = parse_json('coco_announcement.json')
+    args = parse_args()
+    #print(args)
+    time_initial = datetime.strptime("00:00:00", "%H:%M:%S")
+    video_offset_time=datetime.strptime(args.start, "%H:%M:%S")
+    video_offset_time-=time_initial # convert to time delta
+
+    translator_filter = re.compile(args.translator_filter)
+    sub_data = []
+    for name in args.files:
+        extension = os.path.splitext(name)[1]
+        if extension == '.txt':
+            sub_data.extend(parse_korotagger_txt(name, video_offset_time))
+        elif extension == '.json':
+            sub_data.extend(parse_json(name, video_offset_time, translator_filter))
+            
     subs = convert_subtitles(sub_data)
-    write_subs_to_file(subs, 'subtitles.srt')
+    write_subs_to_file(subs, args.output)
     
