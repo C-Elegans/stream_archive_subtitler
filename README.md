@@ -7,6 +7,19 @@ To use this program, you will need to have Python 3 and pip installed. It is als
 
 Installation is as follows:
 
+#### Recommended - Pip
+
+Install via pip
+
+Run the following in the terminal:
+
+``` console
+pip install stream_archive_subtitle
+stream_archive_subtitle -h
+```
+
+#### Build from source
+
 1. Clone the repository by doing the following
 
 	``` console
