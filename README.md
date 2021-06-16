@@ -18,7 +18,7 @@ pip install stream_archive_subtitle
 stream_archive_subtitle -h
 ```
 
-#### Build from source
+#### Alternative - Build from source
 
 1. Clone the repository by doing the following
 
