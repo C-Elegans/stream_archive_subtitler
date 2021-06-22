@@ -95,7 +95,33 @@ def parse_json(json_file, video_offset_time, translator_filter):
         # Append it to the array
         subtitle_lines.append((time_delta, message))
     return subtitle_lines
+
+def parse_luna(luna_log_file, video_offset_time, time_initial):
+    # Read in all of the lines from the text file
+    with open(luna_log_file, 'r') as f:
+        lines = f.readlines()
+
+    subtitle_lines = []
+
+    sub_regex = re.compile('^(\d+:\d+:\d+)\s+\(\w+\)\s+\[\w\w\]\s+(.*)$')
+
+    for line in lines:
+        print(line)
+        match = sub_regex.search(line)
+        if not match:
+            continue
+        print(match.groups())
+        time_str = match.group(1)
+        message = match.group(2)
+        time = datetime.strptime(time_str, "%H:%M:%S")
+        time -= time_initial
+        time -= video_offset_time
+        if time.total_seconds() < 0:
+            continue
+
+        subtitle_lines.append((time, message))
     
+    return subtitle_lines
 
 def convert_subtitles(subtitle_lines):
     # fix lines not being in chronological order in the file
@@ -138,6 +164,10 @@ def main():
             chat_subs = parse_json(name, video_offset_time, translator_filter)
             print(f'Generated {len(chat_subs)} subtitles from chat json')
             sub_data.extend(chat_subs)
+        elif extension == '.log':
+            luna_subs = parse_luna(name, video_offset_time, time_initial)
+            print(f'Generated {len(luna_subs)} subtitles from Luna log')
+            sub_data.extend(luna_subs)
             
     if sub_data:
         subs = convert_subtitles(sub_data)
