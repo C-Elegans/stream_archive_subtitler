@@ -106,11 +106,9 @@ def parse_luna(luna_log_file, video_offset_time, time_initial):
     sub_regex = re.compile('^(\d+:\d+:\d+)\s+\(\w+\)\s+\[\w\w\]\s+(.*)$')
 
     for line in lines:
-        print(line)
         match = sub_regex.search(line)
         if not match:
             continue
-        print(match.groups())
         time_str = match.group(1)
         message = match.group(2)
         time = datetime.strptime(time_str, "%H:%M:%S")
