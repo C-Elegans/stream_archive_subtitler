@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
     parser.add_argument('-t', '--translator-filter', help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
     parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
-    parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset')
+    parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset (default: %(default)s)')
     return parser.parse_args()
 
 

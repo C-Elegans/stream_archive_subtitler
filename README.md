@@ -116,6 +116,14 @@ $ stream_archive_subtitle -o subtitlefile.srt your_txt_file_here.txt
 
 It will create a subtitle `.srt` file with a subtitle for each line in the text file. The `.srt` file can be used with ffmpeg as shown in [Adding Subtitles to a Video](#adding-subtitles-to-a-video)
 
+By default, Korotagger subtracts 20 seconds from the tag timestamp, so that when you click the link in the tag output, you'll jump to the stream archive 20s before the event in question actually happens. This is great for using the tag output to find where in the stream something interesting happened, but not so good for subtitling. 
+
+This tool by default will add 20s to Korotagger time stamps to make them line up better with what is actually happening in the stream. To change this, pass the `-k` flag and your desired offset time to the tool like so:
+
+``` console
+$ stream_archive_subtitle -o subtitlefile.srt -k 00:00:45 korotagger_file.txt
+```
+
 ### Subtitling a Stream with chat_downloader
 
 Some live translators will provide translations directly in stream chat, prefixed with a tag like "[EN]" or "[ru]" or similar. This stream chat can be downloaded using [chat_downloader](https://github.com/xenova/chat-downloader/) by doing the following:
@@ -154,6 +162,20 @@ $ stream_archive_subtitle -o subtitlefile.srt chat_downloader_output.json korota
 ```
 
 It will automatically sort the subtitles by timestamp, giving you translations from both files at the appropriate times.
+
+### Subtitling a Stream with a Luna's Translations log file
+
+There is a Discord bot called "Luna's Translations" that can automatically capture all of the live translations in the stream chat. At the end of the stream, the bot will collate all of the live translations it captured into a log file that can be downloaded. These log filed can be used with this tool to provide subtitles as an alternative to downloading the chat with chat_downloader (if for instance, the live chat is turned off in the archive).
+
+1. First download the translation log from the bot, and change the file extension from `.txt` to `.log` (this is important, as otherwise this tool will think the file is a KoroTagger file).
+
+2. Pass the log file to this tool like so:
+
+``` console
+$ stream_archive_subtitle -o subtitlefile.srt luna_translation_file.log
+```
+
+Note: just like with chat_downloader, you can provide both a Luna's translations `.log` file and a Korotagger `.txt` file and the tool will automatically sort the subtitles by timestamp, giving you translations from both files.
 
 ### Adding subtitles to a video
 
