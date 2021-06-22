@@ -13,12 +13,13 @@ def parse_args():
     parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
     parser.add_argument('-t', '--translator-filter', help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
     parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
+    parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset')
     return parser.parse_args()
 
 
 
 
-def parse_korotagger_txt(input_file, video_offset_time):
+def parse_korotagger_txt(input_file, video_offset_time, korotagger_offset_time):
     # Read in all of the lines from the text file
     with open(input_file, 'r') as f:
         lines = f.readlines()
@@ -52,6 +53,10 @@ def parse_korotagger_txt(input_file, video_offset_time):
         time_delta = timedelta(seconds=seconds, minutes=minutes, hours=hours)    
         # Subtract the time delta from the start time of the video
         time_delta -= video_offset_time
+
+        # Add an offset to correct for KoroTagger placing the tag
+        # timestamps ~20s ahead of when the event actually occurs
+        time_delta += korotagger_offset_time
         # print(f'{time_delta}: {text}')
         # Discard a subtitle if it has a negative time value
         if time_delta.total_seconds() < 0:
@@ -118,18 +123,25 @@ def main():
     time_initial = datetime.strptime("00:00:00", "%H:%M:%S")
     video_offset_time=datetime.strptime(args.start, "%H:%M:%S")
     video_offset_time-=time_initial # convert to time delta
+    korotagger_offset_time = datetime.strptime(args.korotagger_offset, "%H:%M:%S")
+    korotagger_offset_time -= time_initial # convert to time delta
 
     translator_filter = re.compile(args.translator_filter)
     sub_data = []
     for name in args.files:
         extension = os.path.splitext(name)[1]
         if extension == '.txt':
-            sub_data.extend(parse_korotagger_txt(name, video_offset_time))
+            koro_subs = parse_korotagger_txt(name, video_offset_time, korotagger_offset_time)
+            print(f'Generated {len(koro_subs)} subtitles from korotagger txt')
+            sub_data.extend(koro_subs)
         elif extension == '.json':
-            sub_data.extend(parse_json(name, video_offset_time, translator_filter))
+            chat_subs = parse_json(name, video_offset_time, translator_filter)
+            print(f'Generated {len(chat_subs)} subtitles from chat json')
+            sub_data.extend(chat_subs)
             
-    subs = convert_subtitles(sub_data)
-    write_subs_to_file(subs, args.output)
+    if sub_data:
+        subs = convert_subtitles(sub_data)
+        write_subs_to_file(subs, args.output)
     
 
 if __name__ == '__main__':
