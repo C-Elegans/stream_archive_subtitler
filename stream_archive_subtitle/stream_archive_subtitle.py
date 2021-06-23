@@ -14,6 +14,7 @@ def parse_args():
     parser.add_argument('-t', '--translator-filter', help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
     parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
     parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset (default: %(default)s)')
+    parser.add_argument('--spread', type=int, default=7, help='Amount to spread out subtitles by (default: %(default)s)')
     return parser.parse_args()
 
 
@@ -123,7 +124,6 @@ def parse_luna(luna_log_file, video_offset_time, time_initial):
 
 def convert_subtitles(subtitle_lines):
     # fix lines not being in chronological order in the file
-    subtitle_lines = sorted(subtitle_lines, key=lambda x: x[0])
 
     subs = []
     for subtitle, next_subtitle in zip(subtitle_lines, subtitle_lines[1:]):
@@ -134,6 +134,22 @@ def convert_subtitles(subtitle_lines):
     last_sub = subtitle_lines[-1]
     subs.append(srt.Subtitle(index=1, start=last_sub[0], end=timedelta(seconds=59, minutes=59, hours=23, days=6), content=last_sub[1]))
     return subs
+
+def spread_out_subs(subtitle_lines, spread_out_factor):
+    last_timestamp = timedelta(seconds=-10)
+    new_subtitles = []
+    for line in subtitle_lines:
+        cur_timestamp = line[0]
+        text = line[1]
+        if (cur_timestamp - last_timestamp).total_seconds() < spread_out_factor:
+            cur_timestamp = last_timestamp + timedelta(seconds=spread_out_factor)
+            print(f'spreading {line[1]} from {line[0]} to {cur_timestamp}')
+
+        new_subtitles.append((cur_timestamp, text))
+        last_timestamp = cur_timestamp
+    return new_subtitles
+
+    
 
 def write_subs_to_file(subs, output_file):
     data = srt.compose(subs, reindex=True)
@@ -166,6 +182,10 @@ def main():
             luna_subs = parse_luna(name, video_offset_time, time_initial)
             print(f'Generated {len(luna_subs)} subtitles from Luna log')
             sub_data.extend(luna_subs)
+
+    sub_data = sorted(sub_data, key=lambda x: x[0])
+
+    sub_data = spread_out_subs(sub_data, args.spread)
             
     if sub_data:
         subs = convert_subtitles(sub_data)
