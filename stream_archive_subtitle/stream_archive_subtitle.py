@@ -15,12 +15,13 @@ def parse_args():
     parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
     parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset (default: %(default)s)')
     parser.add_argument('--spread', type=int, default=7, help='Amount to spread out subtitles by (default: %(default)s)')
+    parser.add_argument('--add-suffix', action='store_true', help='Add suffix to each subtitle to indicate the source')
     return parser.parse_args()
 
 
 
 
-def parse_korotagger_txt(input_file, video_offset_time, korotagger_offset_time):
+def parse_korotagger_txt(input_file, video_offset_time, korotagger_offset_time, add_suffix):
     # Read in all of the lines from the text file
     with open(input_file, 'r') as f:
         lines = f.readlines()
@@ -63,10 +64,13 @@ def parse_korotagger_txt(input_file, video_offset_time, korotagger_offset_time):
         if time_delta.total_seconds() < 0:
             continue
         # Append it to the array
+        if add_suffix:
+            text +=' -k'
+
         subtitle_lines.append((time_delta, text))
     return subtitle_lines
 
-def parse_json(json_file, video_offset_time, translator_filter):
+def parse_json(json_file, video_offset_time, translator_filter, add_suffix):
     with open(json_file, 'r') as f:
         json_data = json.load(f)
 
@@ -94,10 +98,12 @@ def parse_json(json_file, video_offset_time, translator_filter):
             continue
         # print(message, time_delta)
         # Append it to the array
+        if add_suffix:
+            message +=' -l'
         subtitle_lines.append((time_delta, message))
     return subtitle_lines
 
-def parse_luna(luna_log_file, video_offset_time, time_initial):
+def parse_luna(luna_log_file, video_offset_time, time_initial, add_suffix):
     # Read in all of the lines from the text file
     with open(luna_log_file, 'r') as f:
         lines = f.readlines()
@@ -118,6 +124,8 @@ def parse_luna(luna_log_file, video_offset_time, time_initial):
         if time.total_seconds() < 0:
             continue
 
+        if add_suffix:
+            message +=' -L'
         subtitle_lines.append((time, message))
     
     return subtitle_lines
@@ -171,15 +179,15 @@ def main():
     for name in args.files:
         extension = os.path.splitext(name)[1]
         if extension == '.txt':
-            koro_subs = parse_korotagger_txt(name, video_offset_time, korotagger_offset_time)
+            koro_subs = parse_korotagger_txt(name, video_offset_time, korotagger_offset_time, args.add_suffix)
             print(f'Generated {len(koro_subs)} subtitles from korotagger txt')
             sub_data.extend(koro_subs)
         elif extension == '.json':
-            chat_subs = parse_json(name, video_offset_time, translator_filter)
+            chat_subs = parse_json(name, video_offset_time, translator_filter, args.add_suffix)
             print(f'Generated {len(chat_subs)} subtitles from chat json')
             sub_data.extend(chat_subs)
         elif extension == '.log':
-            luna_subs = parse_luna(name, video_offset_time, time_initial)
+            luna_subs = parse_luna(name, video_offset_time, time_initial, args.add_suffix)
             print(f'Generated {len(luna_subs)} subtitles from Luna log')
             sub_data.extend(luna_subs)
 
