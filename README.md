@@ -63,24 +63,35 @@ stream_archive_subtitle -h
    ```
    It should output something like this:
 
-   ```
-   usage: stream_archive_subtitle [-h] -o OUTPUT [-t TRANSLATOR_FILTER] [-s START] files [files ...]
+```
+usage: stream_archive_subtitle [-h] -o OUTPUT [-l LANGUAGE_FILTER] [-t TRANSLATOR_FILTER] [-s START] [-k KOROTAGGER_OFFSET]
+                               [--spread SPREAD] [--add-suffix] [--luna LUNA] [-m MCHAD]
+                               [files ...]
 
-   Create a subtitle .srt file from korotagger or chat_downloader output
+Create a subtitle .srt file from korotagger or chat_downloader output
 
-   positional arguments:
-     files                 The korotagger or chat_downloader files to parse
+positional arguments:
+  files                 The korotagger or chat_downloader files to parse
 
-   optional arguments:
-     -h, --help            show this help message and exit
-     -o OUTPUT, --output OUTPUT
-   						The subtitle file to write to
-     -t TRANSLATOR_FILTER, --translator-filter TRANSLATOR_FILTER
-   						A regex to filter out translator messages (default: "\[[eE][nN]\]")
-     -s START, --start START
-   						Timestamp to control when the subtitles start from for archives that start in the middle of a stream
-   						(default: 00:00:00)
-   ```
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        The subtitle file to write to
+  -l LANGUAGE_FILTER, --language-filter LANGUAGE_FILTER
+                        A regex to select translations in a single language (default: "\[[eE][nN]\]")
+  -t TRANSLATOR_FILTER, --translator-filter TRANSLATOR_FILTER
+                        A regex to filter the usernames of translators
+  -s START, --start START
+                        Timestamp to control when the subtitles start from for archives that start in the middle of a stream
+                        (default: 00:00:00)
+  -k KOROTAGGER_OFFSET, --korotagger-offset KOROTAGGER_OFFSET
+                        Korotagger default tag offset (default: 00:00:20)
+  --spread SPREAD       Amount to spread out subtitles by (default: 7)
+  --add-suffix          Add suffix to each subtitle to indicate the source
+  --luna LUNA           Luna's Translations format files to use for subtitles
+  -m MCHAD, --mchad MCHAD
+                        Translations downloaded from MChad/MChatX
+```
 
 ## Usage
 
@@ -148,11 +159,13 @@ $ stream_archive_subtitle -o subtitlefile.srt your_txt_file_here.json
 Note, since `stream_archive_subtitle` needs to filter needs to filter out only live translation comments for the subtitles to be properly generated. By default it looks for the regex "\[[eE][nN]\]" which will match the following tags: "[EN]", "[En]", "[eN]", and "[en]". If the tags in your stream look different (either because you want a different language or your live translator uses a different tag), you'll need to change the regular expression like so:
 
 ``` console
-$ stream_archive_subtitle -o subtitlefile.srt --translator-filter '\[[rR][uU]\]' your_txt_file_here.json
+$ stream_archive_subtitle -o subtitlefile.srt --language-filter '\[[rR][uU]\]' your_txt_file_here.json
 
 ```
 
 In this case I changed it to match all of the RU tags instead of EN.
+
+You are also able to filter usernames in a similar way with the `--translator-filter` or `-t` option. Simply provide a regex that matches your desired translator username after the flag.
 
 Note also that if you have both KoroTagger and chat_downloader translations and you want to combine them, just pass both files to the tool like so:
 
