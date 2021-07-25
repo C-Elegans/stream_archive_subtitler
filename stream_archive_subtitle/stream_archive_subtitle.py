@@ -9,7 +9,7 @@ import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Create a subtitle .srt file from korotagger or chat_downloader output')
-    parser.add_argument('files', nargs='+', help='The korotagger or chat_downloader files to parse')
+    parser.add_argument('files', nargs='*', help='The korotagger or chat_downloader files to parse')
     parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
     parser.add_argument('-l', '--language-filter', help='A regex to select translations in a single language (default: "%(default)s")', default='\\[[eE][nN]\\]')
     parser.add_argument('-t', '--translator-filter', help='A regex to filter the usernames of translators')
@@ -17,6 +17,8 @@ def parse_args():
     parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset (default: %(default)s)')
     parser.add_argument('--spread', type=int, default=7, help='Amount to spread out subtitles by (default: %(default)s)')
     parser.add_argument('--add-suffix', action='store_true', help='Add suffix to each subtitle to indicate the source')
+    parser.add_argument('--luna', action='append', help='Luna\'s Translations format files to use for subtitles')
+    parser.add_argument('-m', '--mchad', action='append', help='Translations downloaded from MChad/MChatX')
     return parser.parse_args()
 
 
@@ -210,6 +212,16 @@ def main():
             luna_subs = parse_luna(name, video_offset_time, time_initial, translator_filter, args.add_suffix)
             print(f'Generated {len(luna_subs)} subtitles from Luna log')
             sub_data.extend(luna_subs)
+    if args.luna:
+        for name in args.luna:
+            luna_subs = parse_luna(name, video_offset_time, time_initial, translator_filter, args.add_suffix)
+            print(f'Generated {len(luna_subs)} subtitles from Luna log')
+            sub_data.extend(luna_subs)
+    if args.mchad:
+        for name in args.mchad:
+            pass
+            #mchad_subs = parse_mchad
+        
 
     sub_data = sorted(sub_data, key=lambda x: x[0])
 
