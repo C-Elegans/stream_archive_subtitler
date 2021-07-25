@@ -11,7 +11,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Create a subtitle .srt file from korotagger or chat_downloader output')
     parser.add_argument('files', nargs='+', help='The korotagger or chat_downloader files to parse')
     parser.add_argument('-o', '--output', required=True, help='The subtitle file to write to')
-    parser.add_argument('-t', '--translator-filter', help='A regex to filter out translator messages (default: "%(default)s")', default='\\[[eE][nN]\\]')
+    parser.add_argument('-l', '--language-filter', help='A regex to select translations in a single language (default: "%(default)s")', default='\\[[eE][nN]\\]')
+    parser.add_argument('-t', '--translator-filter', help='A regex to filter the usernames of translators')
     parser.add_argument('-s', '--start', default='00:00:00', help='Timestamp to control when the subtitles start from for archives that start in the middle of a stream (default: %(default)s)')
     parser.add_argument('-k', '--korotagger-offset', default='00:00:20', help='Korotagger default tag offset (default: %(default)s)')
     parser.add_argument('--spread', type=int, default=7, help='Amount to spread out subtitles by (default: %(default)s)')
@@ -70,7 +71,7 @@ def parse_korotagger_txt(input_file, video_offset_time, korotagger_offset_time, 
         subtitle_lines.append((time_delta, text))
     return subtitle_lines
 
-def parse_json(json_file, video_offset_time, translator_filter, add_suffix):
+def parse_json(json_file, video_offset_time, language_filter, translator_filter, add_suffix):
     with open(json_file, 'r') as f:
         json_data = json.load(f)
 
@@ -80,13 +81,20 @@ def parse_json(json_file, video_offset_time, translator_filter, add_suffix):
         if item['action_type'] != 'add_chat_item':
             continue
         # Extract the message from the JSON
+
         message = item['message']
-        match = translator_filter.match(message)
+        match = language_filter.match(message)
         # if the message does not match the translator filter, skip it
         if not match:
             continue
 
-        message = translator_filter.sub('', message).strip().lstrip()
+        if translator_filter:
+            username = item['author']['name']
+            user_match = translator_filter.match(username)
+            if not user_match:
+                continue
+
+        message = language_filter.sub('', message).strip().lstrip()
         # Extract the message timestamp
         time_secs = item['time_in_seconds']
         # Convert to time delta
@@ -174,7 +182,11 @@ def main():
     korotagger_offset_time = datetime.strptime(args.korotagger_offset, "%H:%M:%S")
     korotagger_offset_time -= time_initial # convert to time delta
 
-    translator_filter = re.compile(args.translator_filter)
+    language_filter = re.compile(args.language_filter)
+
+    translator_filter = None
+    if args.translator_filter:
+        translator_filter = re.compile(args.translator_filter)
     sub_data = []
     for name in args.files:
         extension = os.path.splitext(name)[1]
@@ -183,7 +195,7 @@ def main():
             print(f'Generated {len(koro_subs)} subtitles from korotagger txt')
             sub_data.extend(koro_subs)
         elif extension == '.json':
-            chat_subs = parse_json(name, video_offset_time, translator_filter, args.add_suffix)
+            chat_subs = parse_json(name, video_offset_time, language_filter, translator_filter, args.add_suffix)
             print(f'Generated {len(chat_subs)} subtitles from chat json')
             sub_data.extend(chat_subs)
         elif extension == '.log':
