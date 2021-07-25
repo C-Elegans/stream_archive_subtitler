@@ -167,23 +167,39 @@ It will automatically sort the subtitles by timestamp, giving you translations f
 
 There is a Discord bot called "Luna's Translations" that can automatically capture all of the live translations in the stream chat. At the end of the stream, the bot will collate all of the live translations it captured into a log file that can be downloaded. These log filed can be used with this tool to provide subtitles as an alternative to downloading the chat with chat_downloader (if for instance, the live chat is turned off in the archive).
 
-1. First download the translation log from the bot, and change the file extension from `.txt` to `.log` (this is important, as otherwise this tool will think the file is a KoroTagger file).
-
-2. Pass the log file to this tool like so:
+`. Pass the log file to this tool like so:
 
 ``` console
-$ stream_archive_subtitle -o subtitlefile.srt luna_translation_file.log
+$ stream_archive_subtitle -o subtitlefile.srt --luna luna_translation_file.txt
 ```
 
-Note: just like with chat_downloader, you can provide both a Luna's translations `.log` file and a Korotagger `.txt` file and the tool will automatically sort the subtitles by timestamp, giving you translations from both files.
+Note: just like with chat_downloader, you can provide both a Luna's translations file and a Korotagger `.txt` file and the tool will automatically sort the subtitles by timestamp, giving you translations from both files.
+
+Note: Make sure to include the `--luna` flag, otherwise the tool will attempt to parse the file as a Korotagger file.
+
+### Subtitling a Stream from MChad/MChatX
+
+Translation archives can be downloaded using [mchatx_python](https://github.com/C-Elegans/mchatx_python) or manually via `curl` and MChad's REST API. Once you have the archive downloaded, it can be used to create subtitles like so:
+
+```console
+$ stream_archive_subtitle -o subtitlefile.srt --mchad mchad_archive.json
+
+$ stream_archive_subtitle -o subtitlefile.srt -m mchad_archive.json
+```
+
+Note: Make sure to add the `--mchad` or `-m` flag to the arguments, otherwise the tool will attempt to parse the file as a youtube chat archive
 
 ### Adding subtitles to a video
+
+Many video players will search for subtitle files with the same name as the video they are playing. If your video player does not support this, use the following instructions to embed the subtitles in the video file itself:
 
 Once you have a video downloaded and a subtitle `.srt` file generated, you can add the subtitles to the video like so:
 
 ``` console
 $ ffmpeg -i videofile.mov -i subtitles.srt -c copy -c:s mov_text videofile_out.mp4
 ```
+
+### Stream download starts partway through
 
 If you have an archive downloaded that starts partway through the stream (say you started your download of a live stream a little late, or you downloaded only the second half of a youtube stream archive), and you still want subtitles, you will need to tell `stream_archive_subtitle` when your video started relative to the source video for the subtitles to line up. For instance, say I have an archive that starts 31 minutes and 53 seconds after the streamer began streaming. I would then pass an extra parameter `-s 00:31:53` to `stream_archive_subtitle` like so:
 
