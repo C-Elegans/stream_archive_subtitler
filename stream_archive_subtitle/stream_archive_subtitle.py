@@ -135,7 +135,6 @@ def parse_luna(luna_log_file, video_offset_time, time_initial, translator_filter
                 continue
 
         message = match.group(3)
-        print(match.groups())
         time = datetime.strptime(time_str, "%H:%M:%S")
         time -= time_initial
         time -= video_offset_time
@@ -146,6 +145,31 @@ def parse_luna(luna_log_file, video_offset_time, time_initial, translator_filter
             message +=' -L'
         subtitle_lines.append((time, message))
     
+    return subtitle_lines
+
+def parse_mchad(json_file, video_offset_time, add_suffix):
+    with open(json_file, 'r') as f:
+        json_data = json.load(f)
+
+    subtitle_lines = []
+    for item in json_data:
+        message = item['Stext'].strip()
+
+        # Extract the message timestamp
+        time_msec = item['Stime']
+        time_secs = time_msec/1000.0
+        # Convert to time delta
+        time_delta = timedelta(seconds=time_secs)    
+        # Subtract off the video start time offset
+        time_delta -= video_offset_time
+        # If the message came before the video offset, discard it
+        if time_delta.total_seconds() < 0:
+            continue
+        # print(message, time_delta)
+        # Append it to the array
+        if add_suffix:
+            message +=' -m'
+        subtitle_lines.append((time_delta, message))
     return subtitle_lines
 
 def convert_subtitles(subtitle_lines):
@@ -219,8 +243,9 @@ def main():
             sub_data.extend(luna_subs)
     if args.mchad:
         for name in args.mchad:
-            pass
-            #mchad_subs = parse_mchad
+            mchad_subs = parse_mchad(name, video_offset_time, args.add_suffix)
+            print(f'Generated {len(mchad_subs)} subtitles from MChad json')
+            sub_data.extend(mchad_subs)
         
 
     sub_data = sorted(sub_data, key=lambda x: x[0])
