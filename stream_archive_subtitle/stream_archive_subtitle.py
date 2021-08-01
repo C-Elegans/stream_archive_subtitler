@@ -152,6 +152,7 @@ def parse_mchad(json_file, video_offset_time, add_suffix):
         json_data = json.load(f)
 
     subtitle_lines = []
+    start_time = None
     for item in json_data:
         message = item['Stext'].strip()
 
@@ -160,6 +161,13 @@ def parse_mchad(json_file, video_offset_time, add_suffix):
         time_secs = time_msec/1000.0
         # Convert to time delta
         time_delta = timedelta(seconds=time_secs)    
+
+        if message == '--- Stream Starts ---':
+            start_time = time_delta
+            continue
+        elif start_time:
+            time_delta -= start_time
+
         # Subtract off the video start time offset
         time_delta -= video_offset_time
         # If the message came before the video offset, discard it
